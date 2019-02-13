@@ -1,0 +1,4 @@
+*
+!Dockerfile
+!scripts/dockerCleanup.groovy
+!cleanup-job.sh

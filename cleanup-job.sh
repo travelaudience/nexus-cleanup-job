@@ -18,19 +18,19 @@ function output_help {
 
 function load_script {
     # check if the script is not already on Nexus
-    output=$(curl -u "${NEXUS_AUTH}" -X GET "${NEXUS_URL}/service/rest/v1/script" -H "accept: application/json" | grep dockerCleanup)
+    output=$(curl -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/script" -H "accept: application/json" | grep dockerCleanup)
     if [ -z "$output" ];
     then
         local BODY;
         BODY=$(cat /scripts/dockerCleanup.groovy | tr -d '\n');
         echo $BODY;
-        curl -u "${NEXUS_AUTH}" -X POST "${NEXUS_URL}/service/rest/v1/script" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"name\": \"dockerCleanup\", \"content\": \"${BODY}\", \"type\": \"groovy\"}"
+        curl -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"name\": \"dockerCleanup\", \"content\": \"${BODY}\", \"type\": \"groovy\"}"
     fi
 }
 
 #  If you want to delete this script, run this function.
 function delete_script {
-    curl -u "${NEXUS_AUTH}" -X DELETE "${NEXUS_URL}/service/rest/v1/script/dockerCleanup" -H "accept: application/json"
+    curl -u ${NEXUS_AUTH} -X DELETE "${NEXUS_URL}/service/rest/v1/script/dockerCleanup" -H "accept: application/json"
     if [ $? == 0 ];
     then
         echo 'The script deleted succesfully'
@@ -56,7 +56,7 @@ function run_final_cleanup {
     for i in "$@" ;
     do
         echo "Running Task with ID $i"
-        curl -u "${NEXUS_AUTH}" -X POST "${NEXUS_URL}/service/rest/v1/tasks/$i/run" -H "accept: application/json";
+        curl -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$i/run" -H "accept: application/json";
     done
 }
 
@@ -65,7 +65,7 @@ function create_curl {
     DATE=$(adjust_dates ${1});
     URL=$(escape_url ${2});
     TIMEFILTER="${3}";
-    curl -u "${NEXUS_AUTH}" -X POST "${NEXUS_URL}/service/rest/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\"}"
+    curl -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\"}"
 }
 
 

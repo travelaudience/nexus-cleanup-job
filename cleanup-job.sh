@@ -56,7 +56,7 @@ function run_final_cleanup {
     for i in "$@" ;
     do
         echo "Running Task with ID $i"
-        curl -X POST "${NEXUS_URL}/service/rest/v1/tasks/$i/run" -H "accept: application/json";
+        curl -u "${NEXUS_AUTH}" -X POST "${NEXUS_URL}/service/rest/v1/tasks/$i/run" -H "accept: application/json";
     done
 }
 

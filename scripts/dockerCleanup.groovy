@@ -23,7 +23,7 @@ try {
     Iterable<Asset> assets = tx.
         findAssets(Query.builder().where(tq.toString()).param(request.startDate).and('name MATCHES').param(request.url).build(), [repo]);
     urls = assets.collect {'/repository/'+ repo.name + '/' + it.name()};
-        assets.each { asset ->
+    assets.each { asset ->
         log.info('Deleting asset', asset.name());
         tx.deleteAsset(asset);
         if (asset.componentId() != null) {

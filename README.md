@@ -6,7 +6,7 @@ This repo is for a docker image used to allow Nexus admins to create custom clea
 
 You can run this job as a docker image simply by replacing the env variables with your environment data:
 ```
-docker run -it -e NEXUS_AUTH="[username:password]" -e NEXUS_URL="[your_nexus_url]" quay.io/travelaudience/nexus-cleanup-job:latest  -p "60 '^v2\/.*\/manifests\/([a-f0-9]{64})$'
+docker run -it -e NEXUS_AUTH="[username:password]" -e NEXUS_URL="[your_nexus_url]" quay.io/travelaudience/nexus-cleanup-job:latest  -p "60 '^v2\/.*\/manifests\/([a-f0-9]{64})$' last_downloaded"
 ```
 This will do a soft delete of all images tagged with 64-chars SHA that haven't been downloaded for over 60 days. In order to run hard delete and clear the storage size, please read the section '[Setting up tasks to run after cleanup](#about-arguments)'.
 

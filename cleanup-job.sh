@@ -53,7 +53,7 @@ function escape_url {
 
 function run_final_cleanup {
     #  Triggering  needed tasks including hard cleanup task.
-    last=${#@}
+    last=${#@};
     i=0;
     for d in "$@" ;
     do
@@ -61,12 +61,12 @@ function run_final_cleanup {
         if [ $i -eq $last ];
         then
         # optimisation needed: check the status of the previous tasks and then run the last one
-            echo "Waiting for other tasks before compacting blob store"
+            echo "Waiting for other tasks before compacting blob store";
             sleep 300;
-            echo "Running Task with ID $d"
+            echo "Running Task with ID $d";
             curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
         else
-            echo "Running Task with ID $d"
+            echo "Running Task with ID $d";
             curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
         fi
     done

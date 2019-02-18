@@ -24,10 +24,10 @@ try {
         findAssets(Query.builder().where(tq.toString()).param(request.startDate).and('name MATCHES').param(request.url).build(), [repo]);
     urls = assets.collect {'/repository/'+ repo.name + '/' + it.name()};
     assets.each { asset ->
-        log.info('Deleting asset', asset.name());
+        log.info('Deleting asset ' + asset.name());
         tx.deleteAsset(asset);
         if (asset.componentId() != null) {
-            log.info('Deleting component for asset', asset.name());
+            log.info('Deleting component for asset ' + asset.name());
             def component = tx.findComponent(asset.componentId());
             tx.deleteComponent(component);
         }

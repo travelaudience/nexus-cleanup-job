@@ -6,7 +6,7 @@ This repo is for a docker image used to allow Nexus admins to create custom clea
 
 You can run this job as a docker image simply by replacing the env variables with your environment data:
 ```
-docker run -it -e NEXUS_AUTH="[username:password]" -e NEXUS_URL="[your_nexus_url]" quay.io/travelaudience/nexus-cleanup-job:latest  -p "60 '^v2\/.*\/manifests\/([a-f0-9]{64})$' last_downloaded"
+docker run -it -e NEXUS_AUTH="[username:password]" -e NEXUS_URL="[your_nexus_url]" quay.io/travelaudience/nexus-cleanup-job:latest  -p "60 '^v2\/.*\/manifests\/([a-f0-9]{64})$' last_downloaded false"
 ```
 This will do a soft delete of all images tagged with 64-chars SHA that haven't been downloaded for over 60 days. In order to run hard delete and clear the storage size, please read the section '[Setting up tasks to run after cleanup](#about-arguments)'.
 
@@ -25,7 +25,7 @@ The arguments that need to be passed to the image have a strict organisation and
 
 | Argument (-x) | Description | Structure |
 | ------- |----------| -------------|
-| p | parameters for setting up custom cleanup script | "[days] [regex_for_db] [date_query_field]"|
+| p | parameters for setting up custom cleanup script | "[days] [regex_for_db] [date_query_field] [not_downloaded]"|
 | t | Nexus tasks IDs to run after custom cleanup | "[ID1] [ID2] [ID3]"|
 
 __*Setting up cleanup script (-p)*__
@@ -35,7 +35,11 @@ Each set of `-p` parameters will create the following type of query :
 ```
 SELECT * FROM asset WHERE name MATCHES '[regex_for_db]' AND [date_query_field] < [current_date - days]
 ```
-
+** UPDATE: When using `last_downloaded` as [date_query_field] , the script until now didn't delete artifacts that weren't never downloaded ( Null field wasn't included in the query). From now, by adding another cleanup task with [not_downloaded] set to `true` on the script in the `-p` argument, The tool will create a cleanup task that will use the following DB query:
+```
+SELECT * FROM asset WHERE blob_updated < [current_date - days] AND name MATCHES '[regex_for_db]' AND last_downloaded IS NULL
+```
+The [days] argument will be used for limiting the non downloaded artifacts to ones that were only updated before [days] days.
 __*Setting up tasks to run after cleanup (-t)*__
 
 Argument `-t` is meant to be trigger Nexus pre-configured tasks after the custom cleanup. This tasks should be configured manually in Nexus, and their ID should be passed to the image.

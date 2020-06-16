@@ -35,11 +35,11 @@ Each set of `-p` parameters will create the following type of query :
 ```
 SELECT * FROM asset WHERE name MATCHES '[regex_for_db]' AND [date_query_field] < [current_date - days]
 ```
-** UPDATE: When using `last_downloaded` as [date_query_field] , the script until now didn't delete artifacts that weren't never downloaded ( Null field wasn't included in the query). From now, by adding another cleanup task with [not_downloaded] set to `true` on the script in the `-p` argument, The tool will create a cleanup task that will use the following DB query:
+** UPDATE: When using `last_downloaded` as [date_query_field] , the script until now didn't delete artefacts that were never downloaded ( Null field wasn't included in the query). From now, by adding another cleanup task with [not_downloaded] set to `true` on the script in the `-p` argument, The tool will create a cleanup task that will use the following DB query:
 ```
 SELECT * FROM asset WHERE blob_updated < [current_date - days] AND name MATCHES '[regex_for_db]' AND last_downloaded IS NULL
 ```
-The [days] argument will be used for limiting the non downloaded artifacts to ones that were only updated before [days] days.
+The [days] argument will be used for limiting the non downloaded artefacts to ones that were only updated before [days] days.
 __*Setting up tasks to run after cleanup (-t)*__
 
 Argument `-t` is meant to be trigger Nexus pre-configured tasks after the custom cleanup. This tasks should be configured manually in Nexus, and their ID should be passed to the image.

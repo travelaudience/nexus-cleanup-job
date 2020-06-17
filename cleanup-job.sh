@@ -41,7 +41,7 @@ function delete_script {
 
 
 function adjust_dates {
-    local d;   
+    local d;
     d=$(date --date='-'${1}' day' +%Y-%m-%d)
     echo "$d"
 }
@@ -55,19 +55,31 @@ function run_final_cleanup {
     #  Triggering  needed tasks including hard cleanup task.
     last=${#@};
     i=0;
+    prevtask=0;
+    status='"RUNNING"'
     for d in "$@" ;
     do
-        i=$((i+1));
-        if [ $i -eq $last ];
+        if [ $prevtask == '0' ];
         then
-        # optimisation needed: check the status of the previous tasks and then run the last one
-            echo "Waiting for other tasks before compacting blob store";
-            sleep 300;
             echo "Running Task with ID $d";
             curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+            prevtask=$d
         else
-            echo "Running Task with ID $d";
-            curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+            while [ $status == '"RUNNING"' ]; do
+                echo "Checking Previous Task status";
+                status=$(curl -i -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/tasks/$prevtask" -H "accept: application/json" | grep -Eo '"currentState" : "[A-Z]*"' | sed -e 's/"currentState" : //');
+                echo "Status is $status"
+                if [ $status == '"RUNNING"' ]; then
+                    sleeptime=$((5*60));  # wait for 5 minutes until next status check
+                    sleep ${sleeptime};
+                else
+                    echo "Running Task with ID $d";
+                    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+                    prevtask=$d
+                    status='"RUNNING"'
+                    break;
+                fi
+            done
         fi
     done
 }
@@ -77,10 +89,16 @@ function create_curl {
     DATE=$(adjust_dates ${1});
     URL=$(escape_url ${2});
     TIMEFILTER="${3}";
-    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\"}"
+    if [ -z "${4}" ]
+    then
+        NOTDOWNLOADED="false"
+    else
+        NOTDOWNLOADED="${4}"
+    fi
+    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\",\"notDownloaded\":\"${NOTDOWNLOADED}\"}"
 }
 
-
+delete_script;
 echo "==> Loading Cleanup script" & load_script;
 echo "==> Running Custom Cleanup";
 while getopts ":p:t:h" opt; do
@@ -88,7 +106,7 @@ while getopts ":p:t:h" opt; do
         p ) set -f # disable glob
             IFS=' ' # split on space characters
             array=($OPTARG)  # use the split+glob operator
-            if [ "${#array[@]}" = 3 ] ;
+            if [ "${#array[@]}" = 3 ]|| [ "${#array[@]}" = 4 ] ;
             then
                 create_curl ${array[@]}
             else
@@ -104,6 +122,6 @@ while getopts ":p:t:h" opt; do
     esac
 done
 
-echo "==> Running final Cleanup" 
+echo "==> Running final Cleanup"
 run_final_cleanup ${tasks[@]}
 printf "\n Cleanup Ended succesfully!"

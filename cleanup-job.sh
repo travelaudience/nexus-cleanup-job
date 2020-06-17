@@ -70,7 +70,7 @@ function run_final_cleanup {
                 status=$(curl -i -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/tasks/$prevtask" -H "accept: application/json" | grep -Eo '"currentState" : "[A-Z]*"' | sed -e 's/"currentState" : //');
                 echo "Status is $status"
                 if [ $status == '"RUNNING"' ]; then
-                    sleeptime=$((5*60));
+                    sleeptime=$((5*60));  # wait for 5 minutes until next status check
                     sleep ${sleeptime};
                 else
                     echo "Running Task with ID $d";

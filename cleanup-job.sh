@@ -70,13 +70,14 @@ function run_final_cleanup {
                 status=$(curl -i -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/tasks/$prevtask" -H "accept: application/json" | grep -Eo '"currentState" : "[A-Z]*"' | sed -e 's/"currentState" : //');
                 echo "Status is $status"
                 if [ $status == '"RUNNING"' ]; then
-                    sleeptime=$((5*60));  # wait for 5 minutes until next status check
+                    sleeptime=$((1*60));  # wait for 5 minutes until next status check
                     sleep ${sleeptime};
                 else
                     echo "Running Task with ID $d";
                     curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
                     prevtask=$d
                     status='"RUNNING"'
+                    break;
                 fi
             done
         fi
@@ -97,20 +98,21 @@ function create_curl {
     curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\",\"notDownloaded\":\"${NOTDOWNLOADED}\"}"
 }
 
-delete_script;
-echo "==> Loading Cleanup script" & load_script;
+# delete_script;
+# echo "==> Loading Cleanup script" & load_script;
 echo "==> Running Custom Cleanup";
 while getopts ":p:t:h" opt; do
     case $opt in
-        p ) set -f # disable glob
-            IFS=' ' # split on space characters
-            array=($OPTARG)  # use the split+glob operator
-            if [ "${#array[@]}" = 3 ]|| [ "${#array[@]}" = 4 ] ;
-            then
-                create_curl ${array[@]}
-            else
-                echo  "${array[@]} is not valid, please have 3 parameters per query seperated by space ,/n format \"1 '^v2\/.*\/cache\/.*$' 'blob_created' \" "
-            fi;;
+        p ) echo "no p";;
+        # p ) set -f # disable glob
+        #     IFS=' ' # split on space characters
+        #     array=($OPTARG)  # use the split+glob operator
+        #     if [ "${#array[@]}" = 3 ]|| [ "${#array[@]}" = 4 ] ;
+        #     then
+        #         create_curl ${array[@]}
+        #     else
+        #         echo  "${array[@]} is not valid, please have 3 parameters per query seperated by space ,/n format \"1 '^v2\/.*\/cache\/.*$' 'blob_created' \" "
+        #     fi;;
         t ) set -f # disable glob
             IFS=' ' # split on space characters
             tasks=($OPTARG) ;; # use the split+glob operator

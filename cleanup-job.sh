@@ -55,19 +55,30 @@ function run_final_cleanup {
     #  Triggering  needed tasks including hard cleanup task.
     last=${#@};
     i=0;
+    prevtask=0;
+    status='"RUNNING"'
     for d in "$@" ;
     do
-        i=$((i+1));
-        if [ $i -eq $last ];
+        if [ $prevtask == '0' ];
         then
-        # optimisation needed: check the status of the previous tasks and then run the last one
-            echo "Waiting for other tasks before compacting blob store";
-            sleep 300;
             echo "Running Task with ID $d";
             curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+            prevtask=$d
         else
-            echo "Running Task with ID $d";
-            curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+            while [ $status == '"RUNNING"' ]; do
+                echo "Checking Previous Task status";
+                status=$(curl -i -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/tasks/$prevtask" -H "accept: application/json" | grep -Eo '"currentState" : "[A-Z]*"' | sed -e 's/"currentState" : //');
+                echo "Status is $status"
+                if [ $status == '"RUNNING"' ]; then
+                    sleeptime=$((5*60));
+                    sleep ${sleeptime};
+                else
+                    echo "Running Task with ID $d";
+                    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+                    prevtask=$d
+                    status='"RUNNING"'
+                fi
+            done
         fi
     done
 }

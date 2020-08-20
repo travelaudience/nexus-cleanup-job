@@ -18,6 +18,8 @@ This image was aimed to be used on a kubernetes cron-job for periodic cleanup, b
 
 The image works well with [Nexus chart](https://github.com/helm/charts/tree/master/stable/sonatype-nexus) configuration.
 
+From Nexus version `3.21.2` Groovy scripting was disabled by default. In order to make this tool work, you will need to enable them: https://support.sonatype.com/hc/en-us/articles/360045220393-Scripting-Nexus-Repository-Manager-3#how-to-enable
+
 ## How to use this image?
 The arguments that need to be passed to the image have a strict organisation and format, please follow it when using this image in your solution.
 

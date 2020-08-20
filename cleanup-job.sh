@@ -18,19 +18,19 @@ function output_help {
 
 function load_script {
     # check if the script is not already on Nexus
-    output=$(curl -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/script" -H "accept: application/json" | grep dockerCleanup)
+    output=$(curl -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/v1/script" -H "accept: application/json" | grep dockerCleanup)
     if [ -z "$output" ];
     then
         local BODY;
         BODY=$(cat /scripts/dockerCleanup.groovy | tr -d '\n');
         echo $BODY;
-        curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"name\": \"dockerCleanup\", \"content\": \"${BODY}\", \"type\": \"groovy\"}"
+        curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/v1/script" -H "accept: application/json" -H "Content-Type: application/json" -d "{ \"name\": \"dockerCleanup\", \"content\": \"${BODY}\", \"type\": \"groovy\"}"
     fi
 }
 
 #  If you want to delete this script, run this function.
 function delete_script {
-    curl -i -u ${NEXUS_AUTH} -X DELETE "${NEXUS_URL}/service/rest/v1/script/dockerCleanup" -H "accept: application/json"
+    curl -i -u ${NEXUS_AUTH} -X DELETE "${NEXUS_URL}/v1/script/dockerCleanup" -H "accept: application/json"
     if [ $? == 0 ];
     then
         echo 'The script deleted succesfully'
@@ -62,19 +62,19 @@ function run_final_cleanup {
         if [ $prevtask == '0' ];
         then
             echo "Running Task with ID $d";
-            curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+            curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/v1/tasks/$d/run" -H "accept: application/json";
             prevtask=$d
         else
             while [ $status == '"RUNNING"' ]; do
                 echo "Checking Previous Task status";
-                status=$(curl -i -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/service/rest/v1/tasks/$prevtask" -H "accept: application/json" | grep -Eo '"currentState" : "[A-Z]*"' | sed -e 's/"currentState" : //');
+                status=$(curl -i -u ${NEXUS_AUTH} -X GET "${NEXUS_URL}/v1/tasks/$prevtask" -H "accept: application/json" | grep -Eo '"currentState" : "[A-Z]*"' | sed -e 's/"currentState" : //');
                 echo "Status is $status"
                 if [ $status == '"RUNNING"' ]; then
                     sleeptime=$((5*60));  # wait for 5 minutes until next status check
                     sleep ${sleeptime};
                 else
                     echo "Running Task with ID $d";
-                    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/tasks/$d/run" -H "accept: application/json";
+                    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/v1/tasks/$d/run" -H "accept: application/json";
                     prevtask=$d
                     status='"RUNNING"'
                     break;
@@ -95,7 +95,7 @@ function create_curl {
     else
         NOTDOWNLOADED="${4}"
     fi
-    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/service/rest/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\",\"notDownloaded\":\"${NOTDOWNLOADED}\"}"
+    curl -i -u ${NEXUS_AUTH} -X POST "${NEXUS_URL}/v1/script/dockerCleanup/run" -H "accept: application/json" -H "Content-Type: text/plain" -d "{\"repoName\":\"${NEXUS_REPO}\",\"startDate\":\"${DATE}\",\"url\":\"${URL}\",\"timeFilter\":\"${TIMEFILTER}\",\"notDownloaded\":\"${NOTDOWNLOADED}\"}"
 }
 
 delete_script;
